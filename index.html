@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synchronized Input Box</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: none;
+        }
+
+        .save-btn, .copy-btn {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .save-btn:hover, .copy-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .copy-success, .save-success {
+            margin-top: 10px;
+            color: green;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Synchronized Input Box</h2>
+    <textarea id="editableTextBox" placeholder="Type something here..."></textarea>
+    <button class="copy-btn" onclick="copyText()">Copy Text</button>
+    <button class="save-btn" onclick="saveContent()">Save Content</button>
+    <p class="copy-success" id="copySuccessMessage">Text copied successfully!</p>
+    <p class="save-success" id="saveSuccessMessage">Content saved successfully!</p>
+</div>
+
+<script>
+    const repoOwner = 'Kai-Jorden-0716082005';
+    const repoName = 'online-text-editor';
+    const filePath = 'content.txt'; // Path to the file
+    const accessToken = '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'; // GitHub token
+
+    // Load the content from the file when the page loads
+    window.onload = function() {
+        fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`, {
+            headers: {
+                'Authorization': `token ${accessToken}`
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const content = atob(data.content); // Decode Base64
+            document.getElementById('editableTextBox').value = content;
+        });
+    };
+
+    // Save content to GitHub
+    function saveContent() {
+        const content = document.getElementById('editableTextBox').value;
+        const base64Content = btoa(content); // Encode content to Base64
+
+        fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message: 'Update content.txt',
+                content: base64Content,
+                sha: '' // SHA of the file, which you'll need to fetch before each update
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('saveSuccessMessage').style.display = 'block';
+            setTimeout(function() {
+                document.getElementById('saveSuccessMessage').style.display = 'none';
+            }, 2000);
+        });
+    }
+
+    // Copy text to clipboard
+    function copyText() {
+        var textBox = document.getElementById('editableTextBox');
+        textBox.select();
+        textBox.setSelectionRange(0, 99999); // For mobile devices
+        navigator.clipboard.writeText(textBox.value).then(function() {
+            document.getElementById('copySuccessMessage').style.display = 'block';
+            setTimeout(function() {
+                document.getElementById('copySuccessMessage').style.display = 'none';
+            }, 2000);
+        });
+    }
+</script>
+
+</body>
+</html>
